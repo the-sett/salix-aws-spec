@@ -1,4 +1,4 @@
-module Transform exposing (transform)
+module AWS.TransformServiceSpec exposing (transform)
 
 import AWS.Config exposing (Protocol(..), Signer(..))
 import AWS.ServiceSpec as ServiceSpec exposing (AWSType(..), HttpMethod(..), Location(..), Operation, ServiceSpec, Shape, ShapeRef)
