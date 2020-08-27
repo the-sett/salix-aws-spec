@@ -1,6 +1,6 @@
 {
     "type": "package",
-    "name": "the-sett/salix-aws-sepc",
+    "name": "the-sett/salix-aws-spec",
     "summary": "Transform an AWS service specification into Salix.",
     "license": "BSD-3-Clause",
     "version": "1.0.0",
