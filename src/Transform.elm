@@ -15,6 +15,7 @@ import L1
         , Field
         , L1
         , PropSpec(..)
+        , Properties
         , Property(..)
         , Restricted(..)
         , Type(..)
@@ -30,7 +31,6 @@ import ResultME exposing (ResultME)
 import Set exposing (Set)
 import SourcePos exposing (SourceLines)
 import String.Case as Case
-import Templates.AWSStubs as AWSStubs
 import Tuple3
 
 
@@ -186,13 +186,13 @@ transform posFn service =
                     |> Dict.insert "apiVersion" (PString service.metaData.apiVersion)
                     |> Dict.insert "protocol"
                         (protocolToString service.metaData.protocol
-                            |> PEnum AWSStubs.protocolEnum
+                            |> PEnum protocolEnum
                         )
                     |> Dict.insert "signer"
                         (service.metaData.signatureVersion
                             |> Maybe.withDefault SignV4
                             |> signerToString
-                            |> PEnum AWSStubs.signerEnum
+                            |> PEnum signerEnum
                         )
                     |> Dict.update "xmlNamespace" (always (Maybe.map PString service.metaData.xmlNamespace))
                     |> Dict.update "targetPrefix" (always (Maybe.map PString service.metaData.targetPrefix))
@@ -401,7 +401,7 @@ modelStructure shape name =
                     in
                     Dict.empty
                         |> Dict.update "serializedName" (always (Maybe.map PString locationName))
-                        |> Dict.insert "location" (PEnum AWSStubs.locationEnum loc)
+                        |> Dict.insert "location" (PEnum locationEnum loc)
 
                 optionalField =
                     ( memberName
@@ -558,7 +558,7 @@ markTopLevelShape : String -> Operation -> L2 () -> L2 ()
 markTopLevelShape _ operation l2model =
     let
         setTopLevelProp val props =
-            Dict.insert "topLevel" (PEnum AWSStubs.topLevelEnum val) props
+            Dict.insert "topLevel" (PEnum topLevelEnum val) props
 
         markTopLevel : String -> Maybe { a | shape : String } -> L2 () -> L2 ()
         markTopLevel tlPropVal opSide model =
@@ -602,10 +602,10 @@ markCodecs l2 =
             Query.propertiesApiWithoutDefaults l2
 
         requestClosure =
-            selectClosure propertiesApi l2 AWSStubs.isRequest
+            selectClosure propertiesApi l2 isRequest
 
         responseClosure =
-            selectClosure propertiesApi l2 AWSStubs.isResponse
+            selectClosure propertiesApi l2 isResponse
 
         l2WithCodecsMarked =
             ResultME.map2
@@ -653,15 +653,15 @@ markCodecs l2 =
                         kvEncodeSet =
                             selectFields propertiesApi
                                 l2
-                                AWSStubs.isRequest
+                                isRequest
                                 (Query.orPropFilter
-                                    AWSStubs.isInQueryString
-                                    AWSStubs.isInHeader
+                                    isInQueryString
+                                    isInHeader
                                 )
                                 |> ResultME.map Dict.keys
 
                         kvDecodeSet =
-                            selectFields propertiesApi l2 AWSStubs.isResponse AWSStubs.isInHeader
+                            selectFields propertiesApi l2 isResponse isInHeader
                                 |> ResultME.map Dict.keys
 
                         result =
@@ -804,3 +804,99 @@ filterProductDecl propertiesApi filter decl =
         |> ResultME.andThen Query.expectProductOrEmpty
         |> ResultME.map Tuple3.third
         |> ResultME.andThen (Query.filterListByProps propertiesApi filter)
+
+
+
+-- Enums from the AWS stubs code generator.
+
+
+protocolEnum : Enum String
+protocolEnum =
+    Enum.define
+        [ "EC2"
+        , "JSON"
+        , "QUERY"
+        , "REST_JSON"
+        , "REST_XML"
+        ]
+        identity
+
+
+signerEnum : Enum String
+signerEnum =
+    Enum.define
+        [ "SignS3"
+        , "SignV4"
+        ]
+        identity
+
+
+locationEnum : Enum String
+locationEnum =
+    Enum.define
+        [ "header"
+        , "querystring"
+        , "statuscode"
+        , "uri"
+        , "body"
+        ]
+        identity
+
+
+topLevelEnum : Enum String
+topLevelEnum =
+    Enum.define
+        [ "request"
+        , "response"
+        ]
+        identity
+
+
+
+-- Property Filters
+
+
+isInHeader : PropertyFilter pos ( String, Type pos ref, Properties )
+isInHeader =
+    isInLocation "header"
+
+
+isInQueryString : PropertyFilter pos ( String, Type pos ref, Properties )
+isInQueryString =
+    isInLocation "querystring"
+
+
+isInLocation : String -> PropertyFilter pos ( String, Type pos ref, Properties )
+isInLocation location propertiesApi ( _, _, props ) =
+    case (propertiesApi.field props).getEnumProperty locationEnum "location" of
+        Ok val ->
+            location == val |> Ok
+
+        Err err ->
+            Err err
+
+
+isRequest : PropertyFilter pos (L1.Declarable pos L2.RefChecked)
+isRequest propertiesAPI decl =
+    case (propertiesAPI.declarable decl).getOptionalEnumProperty topLevelEnum "topLevel" of
+        Ok (Just "request") ->
+            Ok True
+
+        Ok blah ->
+            Ok False
+
+        Err err ->
+            Err err
+
+
+isResponse : PropertyFilter pos (L1.Declarable pos L2.RefChecked)
+isResponse propertiesAPI decl =
+    case (propertiesAPI.declarable decl).getOptionalEnumProperty topLevelEnum "topLevel" of
+        Ok (Just "response") ->
+            Ok True
+
+        Ok blah ->
+            Ok False
+
+        Err err ->
+            Err err
