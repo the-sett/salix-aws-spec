@@ -1,5 +1,12 @@
 module AWS.TransformServiceSpec exposing (transform)
 
+{-| Transforms an `AWS.ServiceSpec` service specification from the`elm-aws-core`
+package, into a Salix model annotated for code generation.
+
+@docs transform
+
+-}
+
 import AWS.Config exposing (Protocol(..), Signer(..))
 import AWS.ServiceSpec as ServiceSpec exposing (AWSType(..), HttpMethod(..), Location(..), Operation, ServiceSpec, Shape, ShapeRef)
 import Checker
@@ -136,6 +143,8 @@ errorBuilder posFn err =
                 []
 
 
+{-| Attempts to transform a `ServiceSpec` into `L3`.
+-}
 transform : (() -> SourceLines) -> ServiceSpec -> ResultME Error (L3 ())
 transform posFn service =
     let
