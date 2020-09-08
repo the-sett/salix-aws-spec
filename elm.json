@@ -3,7 +3,7 @@
     "name": "the-sett/salix-aws-spec",
     "summary": "Transform an AWS service specification into Salix.",
     "license": "BSD-3-Clause",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "exposed-modules": [
         "AWS.TransformServiceSpec"
     ],
@@ -18,7 +18,7 @@
         "the-sett/elm-error-handling": "2.2.0 <= v < 3.0.0",
         "the-sett/elm-refine": "1.4.0 <= v < 2.0.0",
         "the-sett/elm-string-case": "1.0.2 <= v < 2.0.0",
-        "the-sett/salix": "3.0.1 <= v < 4.0.0"
+        "the-sett/salix": "4.0.0 <= v < 5.0.0"
     },
     "test-dependencies": {}
 }
