@@ -264,6 +264,9 @@ httpMethodToString method =
         PUT ->
             "PUT"
 
+        PATCH ->
+            "PATCH"
+
 
 shapeRefToL1Type : ShapeRef -> Type () Unchecked
 shapeRefToL1Type ref =
